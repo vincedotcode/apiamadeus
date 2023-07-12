@@ -36,9 +36,17 @@ app.use((req, _, next) => {
   });
   next();
 })
+const allowedOrigins = ['http://localhost:3000', 'https://amadeusflight.onrender.com', 'https://gotreep.netlify.app', 'http://localhost:5000'];
 app.use(cors({
-    origin: 'https://amadeusflight.onrender.com'
-  }));
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  }
+}));
 //Configure Amadeus
 const AMADEUS_HOST = process.env.AMADEUS_ENV || "test";
 
@@ -70,7 +78,6 @@ const swaggerDefinition = {
       version: '1.0.0',
       description: 'Amadeus Flight API with Swagger',
     },
-    host: 'https://amadeusflight.onrender.com',
     basePath: '/',
   };
   
@@ -78,6 +85,11 @@ const swaggerDefinition = {
   const options = {
     swaggerDefinition,
     // Paths to files containing OpenAPI definitions
+    servers: [
+        {
+          url: 'https://amadeusflight.onrender.com',
+        },
+      ],
     apis: ['app.js'],
   };
   
