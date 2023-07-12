@@ -23,7 +23,6 @@ if (!process.env.AMADEUS_CLIENT_SECRET)
 
 //Configure express
 let app = express();
-app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '..', '..', 'front', 'build')));
@@ -36,17 +35,7 @@ app.use((req, _, next) => {
   });
   next();
 })
-const allowedOrigins = ['http://localhost:3000', 'https://amadeusflight.onrender.com', 'https://gotreep.netlify.app', 'http://localhost:5000'];
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  }
-}));
+
 //Configure Amadeus
 const AMADEUS_HOST = process.env.AMADEUS_ENV || "test";
 
@@ -70,33 +59,37 @@ if (AMADEUS_HOST === 'test') {
 }
 const limiter = new Bottleneck(limiterArgs);
 
-
+const allowedOrigins = ['http://localhost:3000', 'https://amadeusflight.onrender.com', 'https://gotreep.netlify.app', 'http://localhost:5000'];
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  }
+}));
 // Swagger definition
-const swaggerDefinition = {
-    info: {
-      title: 'Amadeus Flight API',
-      version: '1.0.0',
-      description: 'Amadeus Flight API with Swagger',
-    },
-  };
-  
-  // Options for the swagger docs
-  const options = {
-    swaggerDefinition,
-    // Paths to files containing OpenAPI definitions
-    servers: [
+const swaggerOptions = {
+    swaggerDefinition: {
+      openapi: '3.0.0',
+      info: {
+        title: 'Amadeus Flight Controller',
+        version: '2.0.0',
+        description: 'This is the Amadeus API controller made in Node.js, fully functional',
+      },
+      servers: [
         {
           url: 'https://amadeusflight.onrender.com',
         },
       ],
-    apis: ['app.js'],
+    },
+    apis: ['./controllers/*.js'],
   };
   
-  const swaggerSpec = swaggerJsdoc(options);
-  
+  const swaggerSpec = swaggerJsdoc(swaggerOptions);
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-  
-
 
 // ======================= HELPER FUNCTIONS =======================
 
@@ -213,19 +206,15 @@ function getSearchSuggestions(keyword) {
           style: "currency",
           currency: response.data[0].price.currency,
         });
-
-
-
+  
         let offers = [];
         response.data.forEach((offer) => {
           let offerData = {};
-          console.log("Processing offer:", offer);
           offerData.priceFrom = currencyFormatter.format(offer.price.total);
           offerData.validatingAirline = offer.validatingAirlineCodes[0];
-          console.log("Price : ", priceFrom)
+  
           offer.itineraries.forEach((itinerary, i) => {
             let itineraryData = {};
-            console.log("Processing itinerary:", itinerary);
             let nbSegments = itinerary.segments.length;
             itineraryData.duration = formatDuration(itinerary.duration);
             itineraryData.stops = `${nbSegments == 1
@@ -236,7 +225,6 @@ function getSearchSuggestions(keyword) {
             itineraryData.segments = itinerary.segments.map(
               (segment, i) => {
                 let segmentData = {};
-                console.log("Processing segment:", segment);
                 let segmentArrivalTime = new Date(segment.arrival.at);
                 let carrierCode =
                   segment.operating?.carrierCode || segment.carrierCode;
@@ -292,13 +280,11 @@ function getSearchSuggestions(keyword) {
                   let hours = Math.floor(stopTime / (60 * 60 * 1000));
                   segmentData.stopDuration = `${hours} h ${minutes} min`;
                 }
-                console.log("Segment data after processing:", segmentData);
                 return segmentData;
               }
             );
-            console.log("Itinerary data after processing:", itineraryData);
+  
             if (i === 0) offerData.outbound = itineraryData;
-            
             else {
               offerData.inbounds = [itineraryData];
               itineraryData.priceFormatted = offerData.priceFrom;
@@ -594,5 +580,9 @@ function getSearchSuggestions(keyword) {
       console.error(err);
       res.status(500).send(err);
     });
+  });
+  
+  app.get("/", (_, res) => {
+    res.sendFile(path.join(__dirname, "../front/public/index.html"));
   });
   
