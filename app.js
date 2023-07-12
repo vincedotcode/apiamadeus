@@ -70,7 +70,7 @@ const swaggerDefinition = {
       version: '1.0.0',
       description: 'Amadeus Flight API with Swagger',
     },
-    host: 'amadeusflight.onrender.com',
+    host: 'https://amadeusflight.onrender.com',
     basePath: '/',
   };
   
