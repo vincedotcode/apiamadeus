@@ -3,7 +3,7 @@ const express = require("express");
 const { format, addDays } = require("date-fns");
 const bodyParser = require("body-parser");
 const path = require("path");
-
+const cors = require('cors');
 const dotenv = require("dotenv");
 const Bottleneck = require("bottleneck");
 const swaggerJsdoc = require('swagger-jsdoc');
@@ -23,6 +23,7 @@ if (!process.env.AMADEUS_CLIENT_SECRET)
 
 //Configure express
 let app = express();
+app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '..', '..', 'front', 'build')));
@@ -35,7 +36,9 @@ app.use((req, _, next) => {
   });
   next();
 })
-
+app.use(cors({
+    origin: 'https://amadeusflight.onrender.com'
+  }));
 //Configure Amadeus
 const AMADEUS_HOST = process.env.AMADEUS_ENV || "test";
 
@@ -67,7 +70,7 @@ const swaggerDefinition = {
       version: '1.0.0',
       description: 'Amadeus Flight API with Swagger',
     },
-    host: 'localhost:' + PORT,
+    host: 'amadeusflight.onrender.com',
     basePath: '/',
   };
   
