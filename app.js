@@ -78,7 +78,6 @@ const swaggerDefinition = {
       version: '1.0.0',
       description: 'Amadeus Flight API with Swagger',
     },
-    basePath: '/',
   };
   
   // Options for the swagger docs
