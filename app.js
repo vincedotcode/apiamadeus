@@ -85,7 +85,7 @@ const swaggerOptions = {
         },
       ],
     },
-    apis: ['./controllers/*.js'],
+    apis: ['app.js'],
   };
   
   const swaggerSpec = swaggerJsdoc(swaggerOptions);
